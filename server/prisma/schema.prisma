@@ -1,0 +1,183 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String
+  role     Role   @default(USER)
+
+  refreshToken String?
+
+  avatar String?
+
+  messages Message[]
+
+  assignedTasks Task[]
+
+  notifications Notification[]
+
+  activities Activity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownedWorkspaces Workspace[]       @relation("WorkspaceOwner")
+  memberships     WorkspaceMember[]
+}
+
+model Workspace {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  ownerId String
+  owner   User   @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members WorkspaceMember[]
+  messages Message[]
+  tasks Task[]
+  activities Activity[]
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum NotificationType {
+  MESSAGE
+  TASK_ASSIGNED
+  WORKSPACE_INVITE
+}
+
+model WorkspaceMember {
+  id String @id @default(cuid())
+
+  userId      String
+  workspaceId String
+
+  role WorkspaceRole @default(MEMBER)
+
+  joinedAt DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([userId, workspaceId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+
+  content     String?
+
+  fileUrl     String?
+  fileName    String?
+  fileType    String?
+
+  workspaceId String
+  senderId    String
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sender    User      @relation(fields: [senderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id          String @id @default(cuid())
+
+  title       String
+  description String?
+
+  status      TaskStatus @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+
+  workspaceId String
+  assigneeId  String?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  assignee User? @relation(fields: [assigneeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+
+  id String @id @default(cuid())
+
+  title String
+
+  message String
+
+  type NotificationType
+
+  isRead Boolean @default(false)
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+}
+
+model Activity {
+
+  id String @id @default(cuid())
+
+  workspaceId String
+
+  userId String
+
+  action String
+
+  entityType String?
+
+  entityId String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id])
+
+}

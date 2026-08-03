@@ -1,0 +1,40 @@
+import { create } from "zustand";
+import { getNotifications, markNotificationRead } from "../services/notification.service";
+
+export interface Notification {
+  id: string;
+  title: string;
+  message?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+interface NotificationState {
+  notifications: Notification[];
+  unreadCount: number;
+  fetchNotifications: () => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
+}
+
+export const useNotificationStore = create<NotificationState>((set, get) => ({
+  notifications: [],
+  unreadCount: 0,
+
+  fetchNotifications: async () => {
+  const data = await getNotifications();
+  set({
+    notifications: data,
+    unreadCount: data.filter((n) => !n.isRead).length,
+  });
+},
+
+markAsRead: async (id: string) => {
+  await markNotificationRead(id);
+  set({
+    notifications: get().notifications.map((n) =>
+      n.id === id ? { ...n, isRead: true } : n
+    ),
+    unreadCount: get().notifications.filter((n) => n.id !== id && !n.isRead).length,
+  });
+},
+}));
