@@ -164,3 +164,27 @@ export const updateWorkspace = async (
 
   return response.data.data;
 };
+
+export const removeMember = async (
+  workspaceId: string,
+  memberId: string
+) => {
+  const res = await api.delete(
+    `/workspaces/${workspaceId}/members/${memberId}`
+  );
+
+  return res.data;
+};
+
+export const updateMemberRole = async (
+  workspaceId: string,
+  memberId: string,
+  role: "ADMIN" | "MEMBER"
+) => {
+  const res = await api.patch(
+    `/workspaces/${workspaceId}/members/${memberId}/role`,
+    { role }
+  );
+
+  return res.data;
+};

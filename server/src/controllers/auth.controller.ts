@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import { loginSchema, registerSchema } from "../validators/auth.validator";
-import { loginUser, logoutUser, refreshUserToken, registerUser } from "../services/auth.service";
+import { loginUser, logoutUser, refreshUserToken, registerUser, updateUserPassword } from "../services/auth.service";
 import { asyncHandler } from "../utils/asyncHandler";
 import prisma from "../config/prisma";
 import { AppError } from "../utils/AppError";
 import { verifyRefreshToken } from "../utils/jwt";
+import { updateMeSchema, updatePasswordSchema } from "../validators/auth.validator"; // add to existing import line
+
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const data = registerSchema.parse(req.body);
@@ -122,5 +124,38 @@ export const logout = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Logged out successfully",
+  });
+});
+
+export const updateMe = asyncHandler(async (req: Request, res: Response) => {
+  const data = updateMeSchema.parse(req.body);
+
+  const user = await prisma.user.update({
+    where: { id: req.user!.id },
+    data: { name: data.name },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully",
+    data: user,
+  });
+});
+
+export const updatePassword = asyncHandler(async (req: Request, res: Response) => {
+  const data = updatePasswordSchema.parse(req.body);
+
+  await updateUserPassword(req.user!.id, data.currentPassword, data.newPassword);
+
+  res.status(200).json({
+    success: true,
+    message: "Password updated successfully",
   });
 });

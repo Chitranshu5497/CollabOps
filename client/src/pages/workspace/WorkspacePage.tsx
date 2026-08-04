@@ -4,9 +4,9 @@ import ChatBox from "../../components/chat/ChatBox";
 import { useAuthStore } from "../../store/auth.store";
 import useWorkspaceSocket from "../../hooks/useWorkspaceSocket";
 import useOnlineUsers from "../../hooks/useOnlineUsers";
-import MemberList from "../../components/workspace/MemberList";
 import TaskList from "../../components/task/TaskList";
 import ActivityFeed from "../../components/activity/ActivityFeed";
+import MemberList from "../../components/workspace/MemberList";
 
 const WorkspacePage = () => {
   const onlineUsers = useOnlineUsers();
@@ -48,7 +48,7 @@ const WorkspacePage = () => {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* Left: Members + Activity */}
         <div className="flex flex-col gap-5 lg:col-span-3">
-          <MemberList workspaceId={id} onlineUsers={onlineUsers} />
+          <MemberList workspaceId={id} onlineUsers={onlineUsers} role="OWNER" />
           <ActivityFeed workspaceId={id} />
         </div>
 

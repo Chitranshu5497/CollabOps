@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 
-import { createWorkspaceSchema } from "./workspace.validation";
+import { createWorkspaceSchema, updateMemberRoleSchema } from "./workspace.validation";
 import * as workspaceService from "./workspace.service";
 import { updateWorkspaceSchema } from "./workspace.validation";
 export const createWorkspaceController = async (
@@ -72,5 +72,47 @@ export const updateWorkspaceController = async (
     success: true,
     message: "Workspace updated successfully",
     data: workspace,
+  });
+};
+
+export const removeMemberController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const workspaceId = req.params.workspaceId as string;
+  const memberId = req.params.memberId as string;
+
+  await workspaceService.removeMember(
+    workspaceId,
+    memberId,
+    req.user.id
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Member removed successfully",
+  });
+};
+
+ 
+export const updateMemberRoleController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { role } = updateMemberRoleSchema.parse(req.body);
+  const workspaceId = req.params.workspaceId as string;
+  const memberId = req.params.memberId as string;
+ 
+  const member = await workspaceService.updateMemberRole(
+    workspaceId,
+    memberId,
+    req.user.id,
+    role
+  );
+ 
+  res.status(200).json({
+    success: true,
+    message: "Member role updated successfully",
+    data: member,
   });
 };

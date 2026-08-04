@@ -1,36 +1,32 @@
 import { Router } from "express";
 
 import { authenticate } from "../../middleware/auth.middleware";
-import { getWorkspaceMembersController, updateWorkspaceController } from "./workspace.controller";
 import {
   createWorkspaceController,
   getMyWorkspacesController,
+  getWorkspaceMembersController,
+  updateWorkspaceController,
+  removeMemberController,
+  updateMemberRoleController, // <-- new
 } from "./workspace.controller";
 
 const router = Router();
 
-router.post(
-  "/",
-  authenticate,
-  createWorkspaceController
-);
+router.post("/", authenticate, createWorkspaceController);
 
-router.get(
-  "/",
-  authenticate,
-  getMyWorkspacesController
-);
+router.get("/", authenticate, getMyWorkspacesController);
 
-router.get(
-  "/:workspaceId/members",
-  authenticate,
-  getWorkspaceMembersController
-);
+router.get("/:workspaceId/members", authenticate, getWorkspaceMembersController);
 
+router.delete("/:workspaceId/members/:memberId", authenticate, removeMemberController);
+
+// This was missing — it's why the PATCH from the frontend 404'd.
 router.patch(
-  "/:id",
+  "/:workspaceId/members/:memberId/role",
   authenticate,
-  updateWorkspaceController
+  updateMemberRoleController
 );
+
+router.patch("/:id", authenticate, updateWorkspaceController);
 
 export default router;

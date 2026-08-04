@@ -16,3 +16,8 @@ export const updateWorkspaceSchema = z.object({
 
 export type UpdateWorkspaceInput =
   z.infer<typeof updateWorkspaceSchema>;
+
+  export const updateMemberRoleSchema = z.object({
+  role: z.enum(["ADMIN", "MEMBER"]),
+});
+ 

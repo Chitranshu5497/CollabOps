@@ -16,6 +16,8 @@ import TasksPage from "../pages/tasks/TasksPage";
 import NotificationsPage from "../pages/notifications/NotificationsPage";
 import SettingsPage from "../pages/settings/SettingsPage";
 import WorkspacesPage from "../pages/workspace/WorkspacesPage";
+import MembersPage from "../pages/workspace/MembersPage";
+import ChangeRolePage from "../pages/workspace/ChangeRolePage";
 export const router = createBrowserRouter([
   {
     element: (
@@ -66,6 +68,15 @@ export const router = createBrowserRouter([
         path: "/settings",
         element: <SettingsPage />,
       },
+      {
+        path:"/workspace/:workspaceId/change-role",
+        element: <ChangeRolePage />
+      },
+      {
+        path: "/workspace/:workspaceId/members",
+        element: <MembersPage />,
+      },
+      
     ],
   },
 

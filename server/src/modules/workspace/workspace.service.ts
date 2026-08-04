@@ -75,28 +75,26 @@ export const getUserWorkspaces = async (userId: string) => {
 export const getWorkspaceMembers = async (
   workspaceId: string,
 ) => {
-  const members =
-    await prisma.workspaceMember.findMany({
-      where: {
-        workspaceId,
-      },
+  return prisma.workspaceMember.findMany({
+    where: {
+      workspaceId,
+    },
 
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
         },
       },
+    },
 
-      orderBy: {
-        joinedAt: "asc",
-      },
-    });
-
-  return members.map((member) => member.user);
+    orderBy: {
+      joinedAt: "asc",
+    },
+  });
 };
 
 export const updateWorkspace = async (
@@ -131,6 +129,91 @@ export const updateWorkspace = async (
     data: {
       name: data.name,
       description: data.description,
+    },
+  });
+};
+
+export const removeMember = async (
+  workspaceId: string,
+  memberId: string,
+  currentUserId: string
+) => {
+  const workspace = await prisma.workspace.findUnique({
+    where: {
+      id: workspaceId,
+    },
+  });
+
+  if (!workspace) {
+    throw new Error("Workspace not found");
+  }
+
+  if (workspace.ownerId !== currentUserId) {
+    throw new Error("Only owner can remove members");
+  }
+
+  const member =
+    await prisma.workspaceMember.findUnique({
+      where: {
+        id: memberId,
+      },
+    });
+
+  if (!member) {
+    throw new Error("Member not found");
+  }
+
+  if (member.role === "OWNER") {
+    throw new Error("Owner cannot be removed");
+  }
+
+  await prisma.workspaceMember.delete({
+    where: {
+      id: memberId,
+    },
+  });
+};
+
+export const updateMemberRole = async (
+  workspaceId: string,
+  memberId: string,
+  currentUserId: string,
+  role: "ADMIN" | "MEMBER"
+) => {
+  const workspace = await prisma.workspace.findUnique({
+    where: {
+      id: workspaceId,
+    },
+  });
+
+  if (!workspace) {
+    throw new Error("Workspace not found");
+  }
+
+  if (workspace.ownerId !== currentUserId) {
+    throw new Error("Only owner can change member roles");
+  }
+
+  const member = await prisma.workspaceMember.findUnique({
+    where: {
+      id: memberId,
+    },
+  });
+
+  if (!member) {
+    throw new Error("Member not found");
+  }
+
+  if (member.role === "OWNER") {
+    throw new Error("Owner role cannot be changed");
+  }
+
+  return prisma.workspaceMember.update({
+    where: {
+      id: memberId,
+    },
+    data: {
+      role,
     },
   });
 };

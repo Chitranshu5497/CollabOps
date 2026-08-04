@@ -79,13 +79,10 @@ const WorkspaceCard = ({ workspace }: Props) => {
         setShowUpdateModal(true);
         break;
       case "members":
-        console.log("View members");
-        break;
-      case "remove":
-        console.log("Remove member");
+        navigate(`/workspace/${workspace.id}/members`);
         break;
       case "role":
-        console.log("Change member role");
+        navigate(`/workspace/${workspace.id}/change-role`);
         break;
       case "leave":
         console.log("Leave workspace");
@@ -156,20 +153,20 @@ const WorkspaceCard = ({ workspace }: Props) => {
                 items (if you add any later) could stay pinned outside it. */}
             <div className="styled-scrollbar overflow-y-auto p-2">
               {(workspace.role === "OWNER" || workspace.role === "ADMIN") && (
-              <>
-              <p className="px-3 py-2 text-xs font-semibold text-gray-400">
-                Workspace Information
-              </p>
+                <>
+                  <p className="px-3 py-2 text-xs font-semibold text-gray-400">
+                    Workspace Information
+                  </p>
 
-              <button
-                onClick={() => handleAction("rename")}
-                className="menu-item"
-              >
-                Edit workspace
-              </button>
+                  <button
+                    onClick={() => handleAction("rename")}
+                    className="menu-item"
+                  >
+                    Edit workspace
+                  </button>
 
-              <div className="my-2 border-t" />
-</>
+                  <div className="my-2 border-t" />
+                </>
               )}
               <p className="px-3 py-2 text-xs font-semibold text-gray-400">
                 Members
@@ -184,12 +181,6 @@ const WorkspaceCard = ({ workspace }: Props) => {
 
               {(workspace.role === "OWNER" || workspace.role === "ADMIN") && (
                 <>
-                  <button
-                    onClick={() => handleAction("remove")}
-                    className="menu-item"
-                  >
-                    Remove member
-                  </button>
                   <button
                     onClick={() => handleAction("role")}
                     className="menu-item"
