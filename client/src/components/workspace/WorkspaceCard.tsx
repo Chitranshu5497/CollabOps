@@ -4,6 +4,9 @@ import { MoreVertical } from "lucide-react";
 
 import type { Workspace } from "../../types/workspace";
 import UpdateWorkspaceModal from "./UpdateWorkspaceModal";
+import { leaveWorkspace, deleteWorkspace } from "../../services/workspace.service";
+import ConfirmDialog from "./ConfirmDialog";
+
 interface Props {
   workspace: Workspace;
 }
@@ -41,10 +44,13 @@ const timeAgo = (iso: string) => {
   return new Date(iso).toLocaleDateString();
 };
 
+type ConfirmKind = "leave" | "delete" | null;
+
 const WorkspaceCard = ({ workspace }: Props) => {
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const [g1, g2] = gradientFor(workspace.name);
@@ -85,11 +91,31 @@ const WorkspaceCard = ({ workspace }: Props) => {
         navigate(`/workspace/${workspace.id}/change-role`);
         break;
       case "leave":
-        console.log("Leave workspace");
+        setConfirmKind("leave");
         break;
       case "delete":
-        console.log("Delete workspace");
+        setConfirmKind("delete");
         break;
+    }
+  };
+
+  const handleLeave = async () => {
+    try {
+      await leaveWorkspace(workspace.id);
+      setConfirmKind(null);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteWorkspace(workspace.id);
+      setConfirmKind(null);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -148,9 +174,6 @@ const WorkspaceCard = ({ workspace }: Props) => {
             role="menu"
             className="absolute right-0 top-10 z-50 flex max-h-[min(70vh,22rem)] w-56 max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-xl border bg-white text-sm shadow-xl animate-[fadeIn_0.15s_ease-out] sm:w-60"
           >
-            {/* Scrollable body — max-h above caps overall height, this
-                inner div is what actually scrolls so the header/footer
-                items (if you add any later) could stay pinned outside it. */}
             <div className="styled-scrollbar overflow-y-auto p-2">
               {(workspace.role === "OWNER" || workspace.role === "ADMIN") && (
                 <>
@@ -158,36 +181,24 @@ const WorkspaceCard = ({ workspace }: Props) => {
                     Workspace Information
                   </p>
 
-                  <button
-                    onClick={() => handleAction("rename")}
-                    className="menu-item"
-                  >
+                  <button onClick={() => handleAction("rename")} className="menu-item">
                     Edit workspace
                   </button>
 
                   <div className="my-2 border-t" />
                 </>
               )}
-              <p className="px-3 py-2 text-xs font-semibold text-gray-400">
-                Members
-              </p>
 
-              <button
-                onClick={() => handleAction("members")}
-                className="menu-item"
-              >
+              <p className="px-3 py-2 text-xs font-semibold text-gray-400">Members</p>
+
+              <button onClick={() => handleAction("members")} className="menu-item">
                 View all members
               </button>
 
               {(workspace.role === "OWNER" || workspace.role === "ADMIN") && (
-                <>
-                  <button
-                    onClick={() => handleAction("role")}
-                    className="menu-item"
-                  >
-                    Change member role
-                  </button>
-                </>
+                <button onClick={() => handleAction("role")} className="menu-item">
+                  Change member role
+                </button>
               )}
 
               <div className="my-2 border-t" />
@@ -196,10 +207,7 @@ const WorkspaceCard = ({ workspace }: Props) => {
                 Workspace Actions
               </p>
 
-              <button
-                onClick={() => handleAction("leave")}
-                className="menu-item"
-              >
+              <button onClick={() => handleAction("leave")} className="menu-item">
                 Leave workspace
               </button>
 
@@ -234,6 +242,7 @@ const WorkspaceCard = ({ workspace }: Props) => {
           {timeAgo(workspace.createdAt)}
         </span>
       </div>
+
       <UpdateWorkspaceModal
         open={showUpdateModal}
         onOpenChange={setShowUpdateModal}
@@ -241,6 +250,24 @@ const WorkspaceCard = ({ workspace }: Props) => {
         initialName={workspace.name}
         initialDescription={workspace.description ?? undefined}
         onUpdated={() => window.location.reload()}
+      />
+
+      <ConfirmDialog
+        open={confirmKind === "leave"}
+        title="Leave this workspace?"
+        description="You'll lose access until someone invites you back."
+        confirmLabel="Leave"
+        onConfirm={handleLeave}
+        onCancel={() => setConfirmKind(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmKind === "delete"}
+        title="Delete this workspace?"
+        description="This permanently deletes the workspace and everything in it. This can't be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmKind(null)}
       />
     </div>
   );

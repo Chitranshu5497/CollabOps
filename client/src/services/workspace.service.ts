@@ -188,3 +188,12 @@ export const updateMemberRole = async (
 
   return res.data;
 };
+
+export const leaveWorkspace = async (workspaceId: string): Promise<void> => {
+  await api.post(`/workspaces/${workspaceId}/leave`);
+};
+ 
+export const deleteWorkspace = async (workspaceId: string): Promise<void> => {
+  await api.delete(`/workspaces/${workspaceId}`);
+};
+ 

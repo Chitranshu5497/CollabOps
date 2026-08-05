@@ -7,7 +7,9 @@ import {
   getWorkspaceMembersController,
   updateWorkspaceController,
   removeMemberController,
-  updateMemberRoleController, // <-- new
+  updateMemberRoleController,
+  leaveWorkspaceController, // <-- new
+  deleteWorkspaceController, // <-- new
 } from "./workspace.controller";
 
 const router = Router();
@@ -20,12 +22,15 @@ router.get("/:workspaceId/members", authenticate, getWorkspaceMembersController)
 
 router.delete("/:workspaceId/members/:memberId", authenticate, removeMemberController);
 
-// This was missing — it's why the PATCH from the frontend 404'd.
 router.patch(
   "/:workspaceId/members/:memberId/role",
   authenticate,
   updateMemberRoleController
 );
+
+// New
+router.post("/:workspaceId/leave", authenticate, leaveWorkspaceController);
+router.delete("/:workspaceId", authenticate, deleteWorkspaceController);
 
 router.patch("/:id", authenticate, updateWorkspaceController);
 

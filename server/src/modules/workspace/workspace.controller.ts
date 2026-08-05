@@ -116,3 +116,33 @@ export const updateMemberRoleController = async (
     data: member,
   });
 };
+
+
+export const leaveWorkspaceController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const workspaceId = req.params.workspaceId as string;
+ 
+  await workspaceService.leaveWorkspace(workspaceId, req.user.id);
+ 
+  res.status(200).json({
+    success: true,
+    message: "Left workspace successfully",
+  });
+};
+ 
+export const deleteWorkspaceController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const workspaceId = req.params.workspaceId as string;
+ 
+  await workspaceService.deleteWorkspace(workspaceId, req.user.id);
+ 
+  res.status(200).json({
+    success: true,
+    message: "Workspace deleted successfully",
+  });
+};
+ 

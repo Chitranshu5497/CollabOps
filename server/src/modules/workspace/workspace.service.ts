@@ -217,3 +217,57 @@ export const updateMemberRole = async (
     },
   });
 };
+
+
+export const leaveWorkspace = async (
+  workspaceId: string,
+  userId: string
+): Promise<void> => {
+  const membership = await prisma.workspaceMember.findFirst({
+    where: {
+      workspaceId,
+      userId,
+    },
+  });
+ 
+  if (!membership) {
+    throw new Error("You are not a member of this workspace");
+  }
+ 
+  if (membership.role === "OWNER") {
+    throw new Error(
+      "The owner cannot leave the workspace. Delete it or transfer ownership instead."
+    );
+  }
+ 
+  await prisma.workspaceMember.delete({
+    where: { id: membership.id },
+  });
+};
+ 
+export const deleteWorkspace = async (
+  workspaceId: string,
+  userId: string
+): Promise<void> => {
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+  });
+ 
+  if (!workspace) {
+    throw new Error("Workspace not found");
+  }
+ 
+  if (workspace.ownerId !== userId) {
+    throw new Error("Only the owner can delete this workspace");
+  }
+ 
+  // Explicit member cleanup inside a transaction, rather than relying on
+  // `onDelete: Cascade` in your Prisma schema — safer if that cascade
+  // isn't actually set up on the WorkspaceMember relation. If it IS set
+  // up, this is harmless (just redundant); if it isn't, this is what
+  // prevents an orphaned-membership-row error on delete.
+  await prisma.$transaction([
+    prisma.workspaceMember.deleteMany({ where: { workspaceId } }),
+    prisma.workspace.delete({ where: { id: workspaceId } }),
+  ]);
+};
