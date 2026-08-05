@@ -1,19 +1,18 @@
 import type { Request, Response } from "express";
 
-import { createWorkspaceSchema, updateMemberRoleSchema } from "./workspace.validation";
+import {
+  createWorkspaceSchema,
+  updateMemberRoleSchema,
+} from "./workspace.validation";
 import * as workspaceService from "./workspace.service";
 import { updateWorkspaceSchema } from "./workspace.validation";
 export const createWorkspaceController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const data = createWorkspaceSchema.parse(req.body);
 
-  const workspace = await workspaceService.createWorkspace(
-    req.user.id,
-    data
-  );
-  
+  const workspace = await workspaceService.createWorkspace(req.user.id, data);
 
   res.status(201).json({
     success: true,
@@ -24,13 +23,9 @@ export const createWorkspaceController = async (
 
 export const getMyWorkspacesController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
-
-  const workspaces =
-    await workspaceService.getUserWorkspaces(
-      req.user.id
-    );
+  const workspaces = await workspaceService.getUserWorkspaces(req.user.id);
 
   res.status(200).json({
     success: true,
@@ -44,10 +39,9 @@ export const getWorkspaceMembersController = async (
 ): Promise<void> => {
   const { workspaceId } = req.params;
 
-  const members =
-    await workspaceService.getWorkspaceMembers(
-      workspaceId as string,
-    );
+  const members = await workspaceService.getWorkspaceMembers(
+    workspaceId as string,
+  );
 
   res.status(200).json({
     success: true,
@@ -57,16 +51,15 @@ export const getWorkspaceMembersController = async (
 
 export const updateWorkspaceController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const data = updateWorkspaceSchema.parse(req.body);
 
-  const workspace =
-    await workspaceService.updateWorkspace(
-      req.params.id as string,
-      req.user.id,
-      data
-    );
+  const workspace = await workspaceService.updateWorkspace(
+    req.params.id as string,
+    req.user.id,
+    data,
+  );
 
   res.status(200).json({
     success: true,
@@ -77,16 +70,12 @@ export const updateWorkspaceController = async (
 
 export const removeMemberController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const workspaceId = req.params.workspaceId as string;
   const memberId = req.params.memberId as string;
 
-  await workspaceService.removeMember(
-    workspaceId,
-    memberId,
-    req.user.id
-  );
+  await workspaceService.removeMember(workspaceId, memberId, req.user.id);
 
   res.status(200).json({
     success: true,
@@ -94,22 +83,21 @@ export const removeMemberController = async (
   });
 };
 
- 
 export const updateMemberRoleController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const { role } = updateMemberRoleSchema.parse(req.body);
   const workspaceId = req.params.workspaceId as string;
   const memberId = req.params.memberId as string;
- 
+
   const member = await workspaceService.updateMemberRole(
     workspaceId,
     memberId,
     req.user.id,
-    role
+    role,
   );
- 
+
   res.status(200).json({
     success: true,
     message: "Member role updated successfully",
@@ -117,32 +105,47 @@ export const updateMemberRoleController = async (
   });
 };
 
-
 export const leaveWorkspaceController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const workspaceId = req.params.workspaceId as string;
- 
+
   await workspaceService.leaveWorkspace(workspaceId, req.user.id);
- 
+
   res.status(200).json({
     success: true,
     message: "Left workspace successfully",
   });
 };
- 
+
 export const deleteWorkspaceController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const workspaceId = req.params.workspaceId as string;
- 
+
   await workspaceService.deleteWorkspace(workspaceId, req.user.id);
- 
+
   res.status(200).json({
     success: true,
     message: "Workspace deleted successfully",
   });
 };
- 
+
+export const searchWorkspaceController = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const query = (req.query.q as string) || "";
+
+  const workspaces = await workspaceService.searchWorkspaces(
+    req.user.id,
+    query,
+  );
+
+  res.status(200).json({
+    success: true,
+    data: workspaces,
+  });
+};

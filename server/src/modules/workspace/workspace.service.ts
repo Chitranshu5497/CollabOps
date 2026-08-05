@@ -1,11 +1,12 @@
 import prisma from "../../config/prisma";
 import type { CreateWorkspaceInput } from "./workspace.validation";
+import redis from "../../config/redis";
 
 export const createWorkspace = async (
   userId: string,
   data: CreateWorkspaceInput,
 ) => {
-  return prisma.workspace.create({
+  const workspace = await prisma.workspace.create({
     data: {
       name: data.name,
       description: data.description,
@@ -41,6 +42,10 @@ export const createWorkspace = async (
       },
     },
   });
+  await redis.del(`workspace-search:${userId}:`);
+  await clearWorkspaceSearchCache(userId);
+  await redis.flushAll();
+  return workspace;
 };
 
 export const getUserWorkspaces = async (userId: string) => {
@@ -72,9 +77,7 @@ export const getUserWorkspaces = async (userId: string) => {
   );
 };
 
-export const getWorkspaceMembers = async (
-  workspaceId: string,
-) => {
+export const getWorkspaceMembers = async (workspaceId: string) => {
   return prisma.workspaceMember.findMany({
     where: {
       workspaceId,
@@ -103,7 +106,7 @@ export const updateWorkspace = async (
   data: {
     name: string;
     description?: string;
-  }
+  },
 ) => {
   // Check workspace exists
   const workspace = await prisma.workspace.findUnique({
@@ -121,22 +124,25 @@ export const updateWorkspace = async (
     throw new Error("Not authorized");
   }
 
-  return prisma.workspace.update({
+  const updatedWorkspace = await prisma.workspace.update({
     where: {
       id: workspaceId,
     },
-
     data: {
       name: data.name,
       description: data.description,
     },
   });
+
+  await clearWorkspaceSearchCache(userId);
+
+  return updatedWorkspace;
 };
 
 export const removeMember = async (
   workspaceId: string,
   memberId: string,
-  currentUserId: string
+  currentUserId: string,
 ) => {
   const workspace = await prisma.workspace.findUnique({
     where: {
@@ -152,12 +158,11 @@ export const removeMember = async (
     throw new Error("Only owner can remove members");
   }
 
-  const member =
-    await prisma.workspaceMember.findUnique({
-      where: {
-        id: memberId,
-      },
-    });
+  const member = await prisma.workspaceMember.findUnique({
+    where: {
+      id: memberId,
+    },
+  });
 
   if (!member) {
     throw new Error("Member not found");
@@ -172,13 +177,14 @@ export const removeMember = async (
       id: memberId,
     },
   });
+  await redis.flushAll();
 };
 
 export const updateMemberRole = async (
   workspaceId: string,
   memberId: string,
   currentUserId: string,
-  role: "ADMIN" | "MEMBER"
+  role: "ADMIN" | "MEMBER",
 ) => {
   const workspace = await prisma.workspace.findUnique({
     where: {
@@ -199,6 +205,7 @@ export const updateMemberRole = async (
       id: memberId,
     },
   });
+  await redis.flushAll();
 
   if (!member) {
     throw new Error("Member not found");
@@ -218,10 +225,9 @@ export const updateMemberRole = async (
   });
 };
 
-
 export const leaveWorkspace = async (
   workspaceId: string,
-  userId: string
+  userId: string,
 ): Promise<void> => {
   const membership = await prisma.workspaceMember.findFirst({
     where: {
@@ -229,45 +235,91 @@ export const leaveWorkspace = async (
       userId,
     },
   });
- 
+
   if (!membership) {
     throw new Error("You are not a member of this workspace");
   }
- 
+
   if (membership.role === "OWNER") {
     throw new Error(
-      "The owner cannot leave the workspace. Delete it or transfer ownership instead."
+      "The owner cannot leave the workspace. Delete it or transfer ownership instead.",
     );
   }
- 
+
   await prisma.workspaceMember.delete({
     where: { id: membership.id },
   });
+  await redis.flushAll();
+  await clearWorkspaceSearchCache(userId);
 };
- 
+
 export const deleteWorkspace = async (
   workspaceId: string,
-  userId: string
+  userId: string,
 ): Promise<void> => {
   const workspace = await prisma.workspace.findUnique({
     where: { id: workspaceId },
   });
- 
+
   if (!workspace) {
     throw new Error("Workspace not found");
   }
- 
+
   if (workspace.ownerId !== userId) {
     throw new Error("Only the owner can delete this workspace");
   }
- 
-  // Explicit member cleanup inside a transaction, rather than relying on
-  // `onDelete: Cascade` in your Prisma schema — safer if that cascade
-  // isn't actually set up on the WorkspaceMember relation. If it IS set
-  // up, this is harmless (just redundant); if it isn't, this is what
-  // prevents an orphaned-membership-row error on delete.
+
   await prisma.$transaction([
     prisma.workspaceMember.deleteMany({ where: { workspaceId } }),
     prisma.workspace.delete({ where: { id: workspaceId } }),
   ]);
+  await redis.flushAll();
+  await clearWorkspaceSearchCache(userId);
+};
+
+export const searchWorkspaces = async (userId: string, query: string) => {
+  const cacheKey = `workspace-search:${userId}:${query.toLowerCase()}`;
+
+  // Check cache
+  const cached = await redis.get(cacheKey);
+
+  if (cached) {
+    console.log("✅ CACHE HIT:", cacheKey);
+    return JSON.parse(cached);
+  }
+
+  console.log("❌ CACHE MISS:", cacheKey);
+
+  const result = await prisma.workspaceMember.findMany({
+    where: {
+      userId,
+      workspace: {
+        name: {
+          contains: query,
+          mode: "insensitive",
+        },
+      },
+    },
+
+    include: {
+      workspace: true,
+    },
+
+    take: 8,
+  });
+
+  // Cache for 60 seconds
+  await redis.set(cacheKey, JSON.stringify(result), {
+    EX: 60,
+  });
+
+  return result;
+};
+
+const clearWorkspaceSearchCache = async (userId: string) => {
+  const keys = await redis.keys(`workspace-search:${userId}:*`);
+
+  if (keys.length > 0) {
+    await redis.del(keys);
+  }
 };

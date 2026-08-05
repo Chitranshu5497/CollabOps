@@ -8,8 +8,9 @@ import {
   updateWorkspaceController,
   removeMemberController,
   updateMemberRoleController,
-  leaveWorkspaceController, // <-- new
-  deleteWorkspaceController, // <-- new
+  leaveWorkspaceController,
+  deleteWorkspaceController,
+  searchWorkspaceController,
 } from "./workspace.controller";
 
 const router = Router();
@@ -17,19 +18,28 @@ const router = Router();
 router.post("/", authenticate, createWorkspaceController);
 
 router.get("/", authenticate, getMyWorkspacesController);
+router.get("/search", authenticate, searchWorkspaceController);
 
-router.get("/:workspaceId/members", authenticate, getWorkspaceMembersController);
+router.get(
+  "/:workspaceId/members",
+  authenticate,
+  getWorkspaceMembersController,
+);
 
-router.delete("/:workspaceId/members/:memberId", authenticate, removeMemberController);
+router.delete(
+  "/:workspaceId/members/:memberId",
+  authenticate,
+  removeMemberController,
+);
 
 router.patch(
   "/:workspaceId/members/:memberId/role",
   authenticate,
-  updateMemberRoleController
+  updateMemberRoleController,
 );
 
-// New
 router.post("/:workspaceId/leave", authenticate, leaveWorkspaceController);
+
 router.delete("/:workspaceId", authenticate, deleteWorkspaceController);
 
 router.patch("/:id", authenticate, updateWorkspaceController);
