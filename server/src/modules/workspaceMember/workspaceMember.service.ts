@@ -1,6 +1,6 @@
 import  prisma  from "../../config/prisma";
 import  {AppError}  from "../../utils/AppError";
-
+import { inviteQueue } from "../../jobs/queues/invite.queue";
 
 export const addMember = async (
   workspaceId: string,
@@ -93,6 +93,15 @@ export const inviteMember = async (
   if (!user) {
     throw new AppError("User not found", 404);
   }
+  const workspace = await prisma.workspace.findUnique({
+  where: {
+    id: workspaceId,
+  },
+});
+
+if (!workspace) {
+  throw new AppError("Workspace not found", 404);
+}
 
   const existing =
     await prisma.workspaceMember.findUnique({
@@ -111,7 +120,7 @@ export const inviteMember = async (
     );
   }
 
-  return prisma.workspaceMember.create({
+  const member = await prisma.workspaceMember.create({
 
     data: {
       workspaceId,
@@ -131,5 +140,10 @@ export const inviteMember = async (
     },
 
   });
-
+inviteQueue.add("invite-member", {
+  email: user.email,
+  workspaceName: workspace.name,
+  invitedBy: "Workspace Owner",
+});
+return member;
 };
