@@ -48,9 +48,7 @@ export const createTask = async (
   return task;
 };
 
-export const getWorkspaceTasks = async (
-  workspaceId: string
-) => {
+export const getWorkspaceTasks = async (workspaceId: string) => {
   return prisma.task.findMany({
     where: {
       workspaceId,

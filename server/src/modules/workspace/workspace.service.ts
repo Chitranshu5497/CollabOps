@@ -215,14 +215,25 @@ export const updateMemberRole = async (
     throw new Error("Owner role cannot be changed");
   }
 
-  return prisma.workspaceMember.update({
-    where: {
-      id: memberId,
+  const updatedMember = await prisma.workspaceMember.update({
+  where: {
+    id: memberId,
+  },
+  data: {
+    role,
+  },
+  include: {
+    user: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
     },
-    data: {
-      role,
-    },
-  });
+  },
+});
+
+return updatedMember;
 };
 
 export const leaveWorkspace = async (

@@ -1,5 +1,7 @@
 import prisma from "../../config/prisma";
 import { createActivity } from "../activity/activity.service";
+import { NotificationType } from "@prisma/client";
+import { createNotification } from "../notification/notification.service";
 
 interface CreateMessageInput {
   senderId: string;
@@ -12,9 +14,7 @@ interface CreateMessageInput {
   fileType?: string;
 }
 
-export const createMessage = async (
-  data: CreateMessageInput
-) => {
+export const createMessage = async (data: CreateMessageInput) => {
   const message = await prisma.message.create({
     data: {
       senderId: data.senderId,
@@ -50,13 +50,31 @@ export const createMessage = async (
       hasFile: !!data.fileUrl,
     },
   });
+  const members = await prisma.workspaceMember.findMany({
+    where: {
+      workspaceId: data.workspaceId,
+      userId: {
+        not: data.senderId,
+      },
+    },
+    select: {
+      userId: true,
+    },
+  });
+
+  for (const member of members) {
+    await createNotification({
+      title: "New Message",
+      message: `${message.sender.name} sent a message in your workspace`,
+      type: NotificationType.MESSAGE,
+      userId: member.userId,
+    });
+  }
 
   return message;
 };
 
-export const getWorkspaceMessages = async (
-  workspaceId: string
-) => {
+export const getWorkspaceMessages = async (workspaceId: string) => {
   return prisma.message.findMany({
     where: {
       workspaceId,
@@ -77,10 +95,7 @@ export const getWorkspaceMessages = async (
   });
 };
 
-export const searchMessages = async (
-  workspaceId: string,
-  q: string
-) => {
+export const searchMessages = async (workspaceId: string, q: string) => {
   return prisma.message.findMany({
     where: {
       workspaceId,

@@ -1,13 +1,17 @@
 import { Server, Socket } from "socket.io";
 import { createMessage } from "../modules/message/message.service";
 import { joinWorkspace, leaveWorkspace, getOnlineUsers } from "./presence";
+import { initializeNotificationSocket } from "./notification";
 const connectedUsers = new Map<string, string>();
 // userId -> socketId
 export const initializeSocket = (io: Server) => {
+  initializeNotificationSocket(io);
   io.on("connection", (socket: Socket) => {
     console.log("User connected:", socket.id);
     socket.on("register-user", (userId: string) => {
       connectedUsers.set(userId, socket.id);
+
+      socket.join(`user:${userId}`);
     });
 
     socket.on("join-workspace", ({ workspaceId, userId }) => {
@@ -73,5 +77,3 @@ export const initializeSocket = (io: Server) => {
     });
   });
 };
-
-
