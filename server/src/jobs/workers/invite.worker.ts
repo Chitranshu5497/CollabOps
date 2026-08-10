@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
 
-new Worker(
+const worker = new Worker(
   "invite-email",
 
   async (job) => {
@@ -8,29 +8,18 @@ new Worker(
     console.log("📧 Processing Invite Job");
     console.log("========================");
 
-    console.log("To:", job.data.email);
-    console.log("Workspace:", job.data.workspaceName);
-    console.log("Invited By:", job.data.invitedBy);
+    console.log(job.data);
 
-    console.log("Connecting to Email Provider...");
-
-    await new Promise((resolve) =>
-      setTimeout(resolve, 1500)
-    );
-
-    console.log("Generating email...");
+    if (Math.random() < 0.4) {
+      console.log("❌ Email service unavailable");
+      throw new Error("SMTP Server Down");
+    }
 
     await new Promise((resolve) =>
-      setTimeout(resolve, 1000)
+      setTimeout(resolve, 2000)
     );
 
-    console.log("Sending email...");
-
-    await new Promise((resolve) =>
-      setTimeout(resolve, 1000)
-    );
-
-    console.log("✅ Invite email sent successfully!");
+    console.log("✅ Email Sent");
   },
 
   {
@@ -40,5 +29,15 @@ new Worker(
     },
   }
 );
+
+worker.on("completed", (job) => {
+  console.log(`✅ Job ${job.id} completed`);
+});
+
+worker.on("failed", (job, err) => {
+  console.log(
+    `❌ Job ${job?.id} failed: ${err.message}`
+  );
+});
 
 console.log("🚀 Invite Worker Running");

@@ -18,6 +18,7 @@ import {
   getDashboardStats,
   type DashboardStats,
 } from "../../services/dashboard.service";
+import { getQueueStats, type QueueStats } from "../../services/jobs.service";
 
 const SkeletonCard = () => (
   <div className="animate-pulse rounded-xl border border-gray-100 bg-white p-5">
@@ -92,14 +93,17 @@ const DashboardPage = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
   const fetchDashboard = async () => {
     try {
-      const [workspaceData, dashboardData] = await Promise.all([
+      const [workspaceData, dashboardData, queueData] = await Promise.all([
         getMyWorkspaces(),
         getDashboardStats(),
+        getQueueStats(),
       ]);
       setWorkspaces(workspaceData);
       setStats(dashboardData);
+      setQueueStats(queueData);
     } catch (err) {
       console.log(err);
     } finally {
@@ -174,7 +178,55 @@ const DashboardPage = () => {
           />
         </div>
       )}
+      {!loading && queueStats && (
+        <div className="mt-5 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">
+                Background Jobs
+              </h2>
 
+              <p className="mt-1 text-xs text-gray-500">
+                BullMQ invite email processing
+              </p>
+            </div>
+
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-600">
+              Redis + BullMQ
+            </span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-xl bg-gray-50 p-3">
+              <p className="text-lg font-bold text-gray-900">
+                {queueStats.waiting}
+              </p>
+              <p className="text-xs text-gray-500">Waiting</p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-3">
+              <p className="text-lg font-bold text-gray-900">
+                {queueStats.active}
+              </p>
+              <p className="text-xs text-gray-500">Active</p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-3">
+              <p className="text-lg font-bold text-gray-900">
+                {queueStats.completed}
+              </p>
+              <p className="text-xs text-gray-500">Completed</p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-3">
+              <p className="text-lg font-bold text-gray-900">
+                {queueStats.failed}
+              </p>
+              <p className="text-xs text-gray-500">Failed</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mt-8 flex items-center justify-between">
         <h2
           id="workspaces"

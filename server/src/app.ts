@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
 import authRoutes from "./routes/auth.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import workspaceRoutes from "./modules/workspace/workspace.routes";
@@ -14,6 +13,7 @@ import activityRoutes from "./modules/activity/activity.routes";
 import searchRoutes from "./modules/search/search.routes";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 import notificationRoutes from "./modules/notification/notification.routes";
+import jobsRoutes from "./modules/jobs/jobs.routes";
 const app = express();
 
 // CORS FIRST
@@ -45,6 +45,7 @@ app.use("/api/activity", activityRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/jobs", jobsRoutes);
 // Error handler LAST
 app.use(errorHandler);
 
