@@ -15,19 +15,16 @@ const worker = new Worker(
       throw new Error("SMTP Server Down");
     }
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, 2000)
-    );
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     console.log("✅ Email Sent");
   },
 
   {
     connection: {
-      host: "127.0.0.1",
-      port: 6379,
+      url: process.env.REDIS_URL,
     },
-  }
+  },
 );
 
 worker.on("completed", (job) => {
@@ -35,9 +32,7 @@ worker.on("completed", (job) => {
 });
 
 worker.on("failed", (job, err) => {
-  console.log(
-    `❌ Job ${job?.id} failed: ${err.message}`
-  );
+  console.log(`❌ Job ${job?.id} failed: ${err.message}`);
 });
 
 console.log("🚀 Invite Worker Running");

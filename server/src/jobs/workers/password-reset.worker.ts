@@ -13,8 +13,7 @@ const worker = new Worker(
 
     const { email, token } = job.data;
 
-    const resetLink =
-      `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+    const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
 
     console.log("To:", email);
     console.log("Reset Link:", resetLink);
@@ -74,10 +73,9 @@ const worker = new Worker(
 
   {
     connection: {
-      host: "127.0.0.1",
-      port: 6379,
+      url: process.env.REDIS_URL,
     },
-  }
+  },
 );
 
 worker.on("completed", (job) => {
@@ -85,9 +83,7 @@ worker.on("completed", (job) => {
 });
 
 worker.on("failed", (job, err) => {
-  console.log(
-    `❌ Reset Job ${job?.id} failed: ${err.message}`
-  );
+  console.log(`❌ Reset Job ${job?.id} failed: ${err.message}`);
 });
 
 console.log("🚀 Password Reset Worker Running");

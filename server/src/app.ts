@@ -19,9 +19,9 @@ const app = express();
 // CORS FIRST
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
-  }),
+  })
 );
 // Then parsers
 app.use(express.json());
