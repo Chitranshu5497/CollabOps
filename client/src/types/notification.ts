@@ -4,11 +4,10 @@ export interface Notification {
   message: string;
 
   type:
+    | "MESSAGE"
     | "TASK_ASSIGNED"
-    | "TASK_UPDATED"
     | "WORKSPACE_INVITE";
 
   isRead: boolean;
-
   createdAt: string;
 }

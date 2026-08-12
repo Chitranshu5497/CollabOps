@@ -28,6 +28,9 @@ model User {
 
   avatar String?
 
+  resetPasswordToken       String?
+  resetPasswordTokenExpiry DateTime?
+
   messages Message[]
 
   assignedTasks Task[]

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { loginSchema, registerSchema } from "../validators/auth.validator";
-import { loginUser, logoutUser, refreshUserToken, registerUser, updateUserPassword } from "../services/auth.service";
+import { loginUser, logoutUser, refreshUserToken, registerUser, updateUserPassword, createPasswordResetToken,resetUserPassword } from "../services/auth.service";
 import { asyncHandler } from "../utils/asyncHandler";
 import prisma from "../config/prisma";
 import { AppError } from "../utils/AppError";
@@ -159,3 +159,48 @@ export const updatePassword = asyncHandler(async (req: Request, res: Response) =
     message: "Password updated successfully",
   });
 });
+
+export const forgotPassword = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    if (!email) {
+      throw new AppError("Email is required", 400);
+    }
+
+    await createPasswordResetToken(email);
+
+    res.status(200).json({
+      success: true,
+      message:
+        "If an account exists with this email, a password reset link has been sent.",
+    });
+  }
+);
+
+export const resetPassword = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      throw new AppError(
+        "Token and new password are required",
+        400
+      );
+    }
+
+    if (newPassword.length < 6) {
+      throw new AppError(
+        "Password must be at least 6 characters",
+        400
+      );
+    }
+
+    await resetUserPassword(token, newPassword);
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully",
+    });
+  }
+);

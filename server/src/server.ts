@@ -6,6 +6,9 @@ import {
   initializeSocket
 } from "./socket/socket";
 
+// BullMQ workers
+import "./jobs/workers/invite.worker";
+import "./jobs/workers/password-reset.worker";
 
 const httpServer = createServer(app);
 

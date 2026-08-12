@@ -6,11 +6,13 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt";
 import { AppError } from "../utils/AppError";
+import crypto from "crypto";
+import { passwordResetQueue } from "../jobs/queues/password-reset.queue";
 
 export const registerUser = async (
   name: string,
   email: string,
-  password: string
+  password: string,
 ) => {
   const existingUser = await prisma.user.findUnique({
     where: { email },
@@ -53,10 +55,7 @@ export const registerUser = async (
   };
 };
 
-export const loginUser = async (
-  email: string,
-  password: string
-) => {
+export const loginUser = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({
     where: {
       email,
@@ -67,10 +66,7 @@ export const loginUser = async (
     throw new AppError("Invalid credentials", 401);
   }
 
-  const isPasswordCorrect = await comparePassword(
-    password,
-    user.password
-  );
+  const isPasswordCorrect = await comparePassword(password, user.password);
 
   if (!isPasswordCorrect) {
     throw new AppError("Invalid credentials", 401);
@@ -99,9 +95,7 @@ export const loginUser = async (
   };
 };
 
-export const refreshUserToken = async (
-  refreshToken: string
-) => {
+export const refreshUserToken = async (refreshToken: string) => {
   const decoded = verifyRefreshToken(refreshToken);
 
   const user = await prisma.user.findUnique({
@@ -110,8 +104,7 @@ export const refreshUserToken = async (
     },
   });
 
-  if (!user)
-    throw new AppError("Unauthorized", 401);
+  if (!user) throw new AppError("Unauthorized", 401);
 
   if (user.refreshToken !== refreshToken)
     throw new AppError("Unauthorized", 401);
@@ -124,9 +117,7 @@ export const refreshUserToken = async (
   return accessToken;
 };
 
-export const logoutUser = async (
-  id: string
-) => {
+export const logoutUser = async (id: string) => {
   await prisma.user.update({
     where: {
       id,
@@ -140,7 +131,7 @@ export const logoutUser = async (
 export const updateUserPassword = async (
   id: string,
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
 ) => {
   const user = await prisma.user.findUnique({
     where: { id },
@@ -150,7 +141,10 @@ export const updateUserPassword = async (
     throw new AppError("User not found", 404);
   }
 
-  const isPasswordCorrect = await comparePassword(currentPassword, user.password);
+  const isPasswordCorrect = await comparePassword(
+    currentPassword,
+    user.password,
+  );
 
   if (!isPasswordCorrect) {
     throw new AppError("Current password is incorrect", 400);
@@ -161,5 +155,74 @@ export const updateUserPassword = async (
   await prisma.user.update({
     where: { id },
     data: { password: hashedPassword },
+  });
+};
+
+export const createPasswordResetToken = async (email: string) => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  // Don't reveal whether an email exists
+  if (!user) {
+    return;
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+  // Save token in database
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      resetPasswordToken: resetToken,
+      resetPasswordTokenExpiry: resetTokenExpiry,
+    },
+  });
+
+  // Add email job to BullMQ
+  await passwordResetQueue.add("password-reset", {
+    email: user.email,
+    token: resetToken,
+  });
+
+  return {
+    email: user.email,
+  };
+};
+
+export const resetUserPassword = async (token: string, newPassword: string) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      resetPasswordToken: token,
+      resetPasswordTokenExpiry: {
+        gt: new Date(),
+      },
+    },
+  });
+
+  if (!user) {
+    throw new AppError("Invalid or expired password reset token", 400);
+  }
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      password: hashedPassword,
+
+      // Make token single-use
+      resetPasswordToken: null,
+      resetPasswordTokenExpiry: null,
+
+      // Invalidate existing refresh session
+      refreshToken: null,
+    },
   });
 };

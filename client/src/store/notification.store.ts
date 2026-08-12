@@ -3,14 +3,7 @@ import {
   getNotifications,
   markNotificationRead,
 } from "../services/notification.service";
-
-export interface Notification {
-  id: string;
-  title: string;
-  message?: string;
-  isRead: boolean;
-  createdAt: string;
-}
+import type { Notification } from "../types/notification";
 
 interface NotificationState {
   notifications: Notification[];

@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { socket } from "../socket/socket";
 import { useAuthStore } from "../store/auth.store";
 import { useNotificationStore } from "../store/notification.store";
-import type { Notification } from "../store/notification.store";
-
+import type { Notification } from "../types/notification";
 const useSocket = () => {
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 

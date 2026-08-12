@@ -5,7 +5,8 @@ import DashboardLayout from "../layouts/DashboardLayout";
 
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
-
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 
 import NotFoundPage from "../pages/error/NotFoundPage";
@@ -18,6 +19,7 @@ import SettingsPage from "../pages/settings/SettingsPage";
 import WorkspacesPage from "../pages/workspace/WorkspacesPage";
 import MembersPage from "../pages/workspace/MembersPage";
 import ChangeRolePage from "../pages/workspace/ChangeRolePage";
+
 export const router = createBrowserRouter([
   {
     element: (
@@ -33,6 +35,14 @@ export const router = createBrowserRouter([
       {
         path: "/register",
         element: <RegisterPage />,
+      },
+      {
+        path: "/forgot-password",
+        element: <ForgotPasswordPage />,
+      },
+      {
+        path: "/reset-password",
+        element: <ResetPasswordPage />,
       },
     ],
   },
@@ -69,14 +79,13 @@ export const router = createBrowserRouter([
         element: <SettingsPage />,
       },
       {
-        path:"/workspace/:workspaceId/change-role",
-        element: <ChangeRolePage />
+        path: "/workspace/:workspaceId/change-role",
+        element: <ChangeRolePage />,
       },
       {
         path: "/workspace/:workspaceId/members",
         element: <MembersPage />,
       },
-      
     ],
   },
 

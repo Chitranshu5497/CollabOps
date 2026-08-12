@@ -3,15 +3,11 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
-
 import { loginSchema, type LoginFormData } from "../../validators/auth.schema";
 import { login } from "../../services/auth.service";
 import { useAuthStore } from "../../store/auth.store";
-
-
 import { MailIcon, LockIcon } from "./icons";
 import AuthShell from "./AuthShell";
 
