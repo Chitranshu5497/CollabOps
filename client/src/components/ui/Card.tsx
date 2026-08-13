@@ -6,13 +6,6 @@ interface CardProps {
   glass?: boolean;
 }
 
-/**
- * Drop-in replacement for the original Card. Default look (solid white,
- * rounded-xl, shadow-lg) is unchanged for any existing usage like
- * <Card>...</Card> elsewhere in the app (modals, panels, etc).
- * New optional props: `glass` (translucent + blur, used on the auth pages)
- * and `className` for one-off overrides.
- */
 const Card = ({ children, className = "", glass = false }: CardProps) => {
   return (
     <div

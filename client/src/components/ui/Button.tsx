@@ -20,13 +20,7 @@ const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
   ghost: "bg-transparent text-blue-600 hover:bg-blue-50",
 };
 
-/**
- * Drop-in replacement for the original Button. Same `loading` prop and
- * default export shape — existing <Button loading={isSubmitting}>Login</Button>
- * usages keep working. Added `variant` (defaults to "primary", matching the
- * old solid-blue look) plus a spinner-based loading state instead of
- * replacing the label text, so the button doesn't visually "jump".
- */
+
 const Button = ({
   children,
   loading = false,

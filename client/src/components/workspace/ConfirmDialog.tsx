@@ -12,12 +12,6 @@ interface Props {
   onCancel: () => void;
 }
 
-/**
- * Reusable confirm dialog — used for "Leave workspace", "Delete workspace",
- * and "Remove member". Portaled to document.body for the same reason as
- * UpdateWorkspaceModal: it may be triggered from inside a clickable card,
- * and nesting it there would let clicks bubble into the card's onClick.
- */
 const ConfirmDialog = ({
   open,
   title,

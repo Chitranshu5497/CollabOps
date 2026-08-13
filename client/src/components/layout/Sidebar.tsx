@@ -53,8 +53,6 @@ const Sidebar = ({ open, onClose }: Props) => {
     },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
-  // ...rest unchanged
-  // ...rest unchanged
 
   const handleLogout = async () => {
     try {

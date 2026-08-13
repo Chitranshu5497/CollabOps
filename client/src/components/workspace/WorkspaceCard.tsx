@@ -55,8 +55,6 @@ const WorkspaceCard = ({ workspace }: Props) => {
 
   const [g1, g2] = gradientFor(workspace.name);
 
-  // Close on outside click and on Escape — the menu previously only closed
-  // via its own buttons, so clicking anywhere else left it open.
   useEffect(() => {
     if (!openMenu) return;
 
