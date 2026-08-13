@@ -3,6 +3,7 @@ import { socket } from "../socket/socket";
 import { useAuthStore } from "../store/auth.store";
 import { useNotificationStore } from "../store/notification.store";
 import type { Notification } from "../types/notification";
+
 const useSocket = () => {
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
@@ -20,25 +21,35 @@ const useSocket = () => {
     };
 
     const handleOnlineUsers = (users: string[]) => {
+      console.log("👥 Online users:", users);
       setOnlineUsers(users);
     };
 
-    const addNotification = useNotificationStore.getState().addNotification;
-
-    const handleNewNotification = (notification: Notification) => {
+    const handleNewNotification = (
+      notification: Notification
+    ) => {
       console.log("🔔 New notification:", notification);
 
-      addNotification(notification);
+      useNotificationStore
+        .getState()
+        .addNotification(notification);
     };
 
     socket.on("connect", handleConnect);
     socket.on("online-users", handleOnlineUsers);
-    socket.on("new-notification", handleNewNotification);
+    socket.on(
+      "new-notification",
+      handleNewNotification
+    );
 
     return () => {
       socket.off("connect", handleConnect);
       socket.off("online-users", handleOnlineUsers);
-      socket.off("new-notification", handleNewNotification);
+      socket.off(
+        "new-notification",
+        handleNewNotification
+      );
+
       socket.disconnect();
     };
   }, []);

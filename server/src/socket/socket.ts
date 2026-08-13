@@ -9,6 +9,8 @@ export const initializeSocket = (io: Server) => {
   io.on("connection", (socket: Socket) => {
     console.log("User connected:", socket.id);
     socket.on("register-user", (userId: string) => {
+      socket.data.userId = userId;
+
       connectedUsers.set(userId, socket.id);
 
       socket.join(`user:${userId}`);
@@ -20,7 +22,7 @@ export const initializeSocket = (io: Server) => {
       socket.data.workspaceId = workspaceId;
       socket.data.userId = userId;
 
-      joinWorkspace(workspaceId, userId);
+      joinWorkspace(workspaceId, userId, socket.id);
 
       io.to(workspaceId).emit("online-users", getOnlineUsers(workspaceId));
 
@@ -64,11 +66,15 @@ export const initializeSocket = (io: Server) => {
 
       const userId = socket.data.userId;
       if (socket.data.userId) {
-        connectedUsers.delete(socket.data.userId);
+        const currentSocketId = connectedUsers.get(socket.data.userId);
+
+        if (currentSocketId === socket.id) {
+          connectedUsers.delete(socket.data.userId);
+        }
       }
 
       if (workspaceId && userId) {
-        leaveWorkspace(workspaceId, userId);
+        leaveWorkspace(workspaceId, userId, socket.id);
 
         io.to(workspaceId).emit("online-users", getOnlineUsers(workspaceId));
       }
