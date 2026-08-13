@@ -1,26 +1,32 @@
 import { Request, Response } from "express";
 import { loginSchema, registerSchema } from "../validators/auth.validator";
-import { loginUser, logoutUser, refreshUserToken, registerUser, updateUserPassword, createPasswordResetToken,resetUserPassword } from "../services/auth.service";
+import {
+  loginUser,
+  logoutUser,
+  refreshUserToken,
+  registerUser,
+  updateUserPassword,
+  createPasswordResetToken,
+  resetUserPassword,
+} from "../services/auth.service";
 import { asyncHandler } from "../utils/asyncHandler";
 import prisma from "../config/prisma";
 import { AppError } from "../utils/AppError";
 import { verifyRefreshToken } from "../utils/jwt";
-import { updateMeSchema, updatePasswordSchema } from "../validators/auth.validator"; // add to existing import line
-
+import {
+  updateMeSchema,
+  updatePasswordSchema,
+} from "../validators/auth.validator"; // add to existing import line
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const data = registerSchema.parse(req.body);
 
-  const result = await registerUser(
-    data.name,
-    data.email,
-    data.password
-  );
+  const result = await registerUser(data.name, data.email, data.password);
 
   res.cookie("refreshToken", result.refreshToken, {
     httpOnly: true,
-    secure: false, // true in production
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -46,8 +52,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   res.cookie("refreshToken", result.refreshToken, {
     httpOnly: true,
-    secure: false, // true in production with HTTPS
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -93,9 +99,7 @@ export const refresh = asyncHandler(async (req, res) => {
     throw new AppError("Unauthorized", 401);
   }
 
-  const accessToken = await refreshUserToken(
-    refreshToken
-  );
+  const accessToken = await refreshUserToken(refreshToken);
 
   res.status(200).json({
     success: true,
@@ -119,8 +123,11 @@ export const logout = asyncHandler(async (req, res) => {
 
   await logoutUser(decoded.id);
 
-  res.clearCookie("refreshToken");
-
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
   res.status(200).json({
     success: true,
     message: "Logged out successfully",
@@ -149,16 +156,22 @@ export const updateMe = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const updatePassword = asyncHandler(async (req: Request, res: Response) => {
-  const data = updatePasswordSchema.parse(req.body);
+export const updatePassword = asyncHandler(
+  async (req: Request, res: Response) => {
+    const data = updatePasswordSchema.parse(req.body);
 
-  await updateUserPassword(req.user!.id, data.currentPassword, data.newPassword);
+    await updateUserPassword(
+      req.user!.id,
+      data.currentPassword,
+      data.newPassword,
+    );
 
-  res.status(200).json({
-    success: true,
-    message: "Password updated successfully",
-  });
-});
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  },
+);
 
 export const forgotPassword = asyncHandler(
   async (req: Request, res: Response) => {
@@ -175,7 +188,7 @@ export const forgotPassword = asyncHandler(
       message:
         "If an account exists with this email, a password reset link has been sent.",
     });
-  }
+  },
 );
 
 export const resetPassword = asyncHandler(
@@ -183,17 +196,11 @@ export const resetPassword = asyncHandler(
     const { token, newPassword } = req.body;
 
     if (!token || !newPassword) {
-      throw new AppError(
-        "Token and new password are required",
-        400
-      );
+      throw new AppError("Token and new password are required", 400);
     }
 
     if (newPassword.length < 6) {
-      throw new AppError(
-        "Password must be at least 6 characters",
-        400
-      );
+      throw new AppError("Password must be at least 6 characters", 400);
     }
 
     await resetUserPassword(token, newPassword);
@@ -202,5 +209,5 @@ export const resetPassword = asyncHandler(
       success: true,
       message: "Password reset successfully",
     });
-  }
+  },
 );
