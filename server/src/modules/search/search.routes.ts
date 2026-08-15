@@ -5,6 +5,6 @@ import { searchRateLimiter } from "../../middleware/rateLimit.middleware";
 
 const router = Router();
 
-router.get("/",authenticate,searchRateLimiter,searchController);
+router.get("/", authenticate, searchRateLimiter, searchController);
 
 export default router;

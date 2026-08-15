@@ -16,11 +16,11 @@ export const searchController = asyncHandler(
       });
     }
 
-    const result = await globalSearch(q);
+    const result = await globalSearch(q, req.user!.id);
 
     res.json({
       success: true,
       data: result,
     });
-  }
+  },
 );
